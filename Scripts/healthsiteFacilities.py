@@ -1,6 +1,7 @@
 import os
 import json
 import coreapi
+from pandas import DataFrame as df
 
 print('Loading Schema Document')
 # Initialize a client & load the schema document
@@ -70,9 +71,56 @@ def getFacilityData(apiKey,pageNo,location):
     
     facilityList = getHealthFacilities(apiKey,pageNo,location)
     
-    outputFilename = ''.join([location,'_Facilities.json'])
-    
-    with open(outputFilename, 'w') as outfile:
-        json.dump(facilityList, outfile)
+    dictList = []
+    for facility in facilityList:
+        unorderedDict = dict(dict(facility)['attributes'])
+        unorderedDict['centroid_type'] = dict(dict(facility)['centroid'])['type']
+        unorderedDict['latitude'] = dict(dict(facility)['centroid'])['coordinates'][1]
+        unorderedDict['longitude'] = dict(dict(facility)['centroid'])['coordinates'][0]
+        unorderedDict['osm_id'] = dict(facility)['osm_id']
+        unorderedDict['osm_type'] = dict(facility)['osm_type']
+        unorderedDict['completeness'] = dict(facility)['completeness']
         
-    print('%s file has been created with health Facility Data' %(outputFilename))
+        dictList.append(unorderedDict)
+    
+    outputFilename = ''.join(['healthsite_',location,'_Facilities'])
+    jsonOutput = ''.join([outputFilename,'.json'])
+    xlsxOutput = ''.join([outputFilename,'.xlsx'])
+    
+    with open(jsonOutput, 'w') as outfile:
+        json.dump(facilityList, outfile)
+    
+    df(dictList).to_excel(xlsxOutput,index=False)
+        
+    print('%s files have been created with health Facility Data' %(outputFilename))
+    
+def main():
+    print("Enter the API Key to access the api of healthsite.io")
+    apiInput = str(input())
+    print("")
+    
+    print("Enter the location(Countary Name) of which health facilities you want to get.")
+    locationInput = str(input())
+    print("")
+    
+    print("Enter the page numbers or page range for the health facilities you want to get.")
+    print("press 'h' for more information about the page numbers.")
+    pageInput = str(input())
+    
+    if pageInput == 'h':
+        print('''
+                healthsite.io api requires A page number within the paginated result set.
+                If pageNo is a range, then entered the range as string seperated by comma(,)
+                For example: pageNo = "1,15". Here 1 is the starting pageNo and 15 is the ending pageNo.
+            ''')
+        print("")
+        print("Enter the page number or page range.")
+        pageInput = str(input())
+        
+    print("")
+    print("Countary: %s" %(locationInput))
+    print("pageInfo: %s" %(pageInput))
+    getFacilityData(apiInput,pageInput,locationInput)
+
+if __name__ == "__main__":
+    main()
