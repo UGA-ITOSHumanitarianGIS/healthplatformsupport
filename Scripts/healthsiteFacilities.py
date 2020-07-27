@@ -88,7 +88,7 @@ def getFacilityData(apiKey,pageNo,location):
     xlsxOutput = ''.join([outputFilename,'.xlsx'])
     
     with open(jsonOutput, 'w') as outfile:
-        json.dump(facilityList, outfile)
+        json.dump(facilityList, outfile,indent=4)
     
     df(dictList).to_excel(xlsxOutput,index=False)
         
